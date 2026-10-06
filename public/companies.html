@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Companies - PlacePro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <h3 class="text-center text-primary fw-bold my-3">PlacePro</h3>
+        <a href="dashboard.html"><i class="bi bi-house-door"></i> Dashboard</a>
+        <a href="companies.html" class="active"><i class="bi bi-building"></i> Companies</a>
+        <a href="aptitude.html"><i class="bi bi-calculator"></i> Aptitude</a>
+        <a href="coding.html"><i class="bi bi-code-slash"></i> Coding</a>
+        <a href="learning.html"><i class="bi bi-book"></i> Learning</a>
+        <a href="mock-interview.html"><i class="bi bi-person-video2"></i> Mock Interviews</a>
+        <a href="progress.html"><i class="bi bi-graph-up"></i> Progress</a>
+        <a href="#" onclick="logout()" class="mt-auto mb-3 text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Top Companies</h2>
+            <button class="btn btn-outline-secondary" onclick="toggleTheme()"><i class="bi bi-moon"></i></button>
+        </div>
+        <div class="row g-4" id="companiesGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Preparation Modal -->
+    <div class="modal fade" id="prepModal" tabindex="-1" aria-labelledby="prepModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prepModalLabel">Preparation Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h5 class="text-primary">Required Concepts</h5>
+                    <p id="prepSkills"></p>
+                    <hr>
+                    <h5 class="text-primary">Important Questions for Preparation</h5>
+                    <ul id="prepQuestions" class="list-group mb-3">
+                        <!-- Populated dynamically -->
+                    </ul>
+                    <hr>
+                    <h5 class="text-primary">Recommended Learning Materials</h5>
+                    <p>Brush up your skills using our curated study materials.</p>
+                    <a href="learning.html" class="btn btn-success"><i class="bi bi-book"></i> Browse Materials</a>
+                    <a href="aptitude.html" class="btn btn-outline-primary"><i class="bi bi-calculator"></i> Take Aptitude Test</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const companyDomains = {
+                'Infosys': 'infosys.com',
+                'Wipro': 'wipro.com',
+                'Accenture': 'accenture.com',
+                'Cognizant': 'cognizant.com',
+                'Capgemini': 'capgemini.com',
+                'Amazon': 'amazon.com',
+                'Google': 'google.com',
+                'IBM': 'ibm.com',
+                'Cisco': 'cisco.com',
+                'Microsoft': 'microsoft.com',
+                'Uber': 'uber.com',
+                'Meta': 'meta.com'
+            };
+
+            const grid = document.getElementById('companiesGrid');
+            try {
+                const companies = await fetchWithAuth('/companies');
+                if (companies && Array.isArray(companies)) {
+                    if (companies.length === 0) {
+                        grid.innerHTML = '<p class="text-center w-100">No companies found in the database.</p>';
+                        return;
+                    }
+                    grid.innerHTML = companies.map(c => {
+                        const domain = companyDomains[c.name] || 'example.com';
+                        let logo = `https://logo.clearbit.com/${domain}`;
+                        
+                        return `
+                        <div class="col-md-4">
+                            <div class="card p-3 text-center h-100">
+                                <div class="bg-white rounded p-2 mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                    <img src="${logo}" alt="${c.name}" onerror="this.src='${c.logo_url}'" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                </div>
+                                <h4>${c.name}</h4>
+                                <p class="text-primary fw-bold">${c.package}</p>
+                                <p class="small text-muted text-start"><strong>Skills:</strong> ${c.skills_required}</p>
+                                <div class="mt-auto d-flex gap-2 justify-content-center flex-wrap">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="showPreparation('${encodeURIComponent(JSON.stringify(c))}')">View Preparation</button>
+                                    <a href="https://www.${domain}" target="_blank" class="btn btn-primary btn-sm">Visit Website</a>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                } else if (companies && companies.error) {
+                    grid.innerHTML = `<p class="text-danger text-center w-100">Error loading companies: ${companies.error}</p>`;
+                }
+            } catch (err) {
+                grid.innerHTML = `<p class="text-danger text-center w-100">Failed to connect to the server.</p>`;
+            }
+        });
+
+        function showPreparation(companyDataStr) {
+            const company = JSON.parse(decodeURIComponent(companyDataStr));
+            document.getElementById('prepModalLabel').innerText = `${company.name} Preparation`;
+            document.getElementById('prepSkills').innerText = company.skills_required;
+            
+            // Dummy logic to generate some relevant questions based on the skills required
+            const skills = company.skills_required.toLowerCase();
+            let questionsHTML = '';
+            
+            if (skills.includes('java')) {
+                questionsHTML += '<li class="list-group-item">What are the main concepts of OOPs in Java?</li>';
+                questionsHTML += '<li class="list-group-item">Explain the difference between HashMap and HashTable.</li>';
+            }
+            if (skills.includes('python')) {
+                questionsHTML += '<li class="list-group-item">What are decorators in Python?</li>';
+                questionsHTML += '<li class="list-group-item">Explain lists vs tuples.</li>';
+            }
+            if (skills.includes('sql') || skills.includes('dbms')) {
+                questionsHTML += '<li class="list-group-item">Write a SQL query to find the second highest salary.</li>';
+                questionsHTML += '<li class="list-group-item">Explain normalization forms.</li>';
+            }
+            if (questionsHTML === '') {
+                questionsHTML = '<li class="list-group-item">Explain your final year project.</li><li class="list-group-item">Tell me about yourself.</li>';
+            }
+            
+            document.getElementById('prepQuestions').innerHTML = questionsHTML;
+
+            const modal = new bootstrap.Modal(document.getElementById('prepModal'));
+            modal.show();
+        }
+    </script>
+</body>
+</html>

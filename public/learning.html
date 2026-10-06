@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Resources - PlacePro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <h3 class="text-center text-primary fw-bold my-3">PlacePro</h3>
+        <a href="dashboard.html"><i class="bi bi-house-door"></i> Dashboard</a>
+        <a href="companies.html"><i class="bi bi-building"></i> Companies</a>
+        <a href="aptitude.html"><i class="bi bi-calculator"></i> Aptitude</a>
+        <a href="coding.html"><i class="bi bi-code-slash"></i> Coding</a>
+        <a href="learning.html" class="active"><i class="bi bi-book"></i> Learning</a>
+        <a href="mock-interview.html"><i class="bi bi-person-video2"></i> Mock Interviews</a>
+        <a href="progress.html"><i class="bi bi-graph-up"></i> Progress</a>
+        <a href="#" onclick="logout()" class="mt-auto mb-3 text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h2 class="mb-4">Learning Resources</h2>
+        <div class="row g-4" id="materialsGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const materials = await fetchWithAuth('/materials');
+            if (materials) {
+                const grid = document.getElementById('materialsGrid');
+                grid.innerHTML = materials.map(m => `
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h5 class="text-primary"><i class="bi bi-file-earmark-pdf"></i> ${m.title}</h5>
+                            <span class="badge bg-secondary mb-2" style="width:fit-content">${m.category}</span>
+                            <p class="small">${m.description}</p>
+                            <div class="mt-auto">
+                                <a href="${m.file_url}" target="_blank" class="btn btn-outline-primary btn-sm fw-bold"><i class="bi bi-box-arrow-up-right me-1"></i> View Material</a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Interviews - PlacePro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <h3 class="text-center text-primary fw-bold my-3">PlacePro</h3>
+        <a href="dashboard.html"><i class="bi bi-house-door"></i> Dashboard</a>
+        <a href="companies.html"><i class="bi bi-building"></i> Companies</a>
+        <a href="aptitude.html"><i class="bi bi-calculator"></i> Aptitude</a>
+        <a href="coding.html"><i class="bi bi-code-slash"></i> Coding</a>
+        <a href="learning.html"><i class="bi bi-book"></i> Learning</a>
+        <a href="mock-interview.html" class="active"><i class="bi bi-person-video2"></i> Mock Interviews</a>
+        <a href="progress.html"><i class="bi bi-graph-up"></i> Progress</a>
+        <a href="#" onclick="logout()" class="mt-auto mb-3 text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h2 class="mb-4">Mock Interviews</h2>
+        <div class="row g-4" id="interviewsGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let interviews = [];
+        document.addEventListener('DOMContentLoaded', async () => {
+            interviews = await fetchWithAuth('/materials/mock-interviews');
+            if (interviews && interviews.length > 0) {
+                renderInterviewUI();
+            } else {
+                document.getElementById('interviewsGrid').innerHTML = "<p>No mock interviews available.</p>";
+            }
+        });
+
+        function renderInterviewUI() {
+            const container = document.getElementById('interviewsGrid');
+            container.innerHTML = `
+                <div class="col-md-4">
+                    <div class="card p-3 h-100 overflow-auto" style="max-height: 75vh; border: 1px solid var(--glass-border); background: var(--card-bg);">
+                        <h5 class="mb-3 text-primary"><i class="bi bi-list-task"></i> Available Questions</h5>
+                        <div class="list-group list-group-flush" id="qList">
+                            ${interviews.map((i, idx) => `
+                                <button class="list-group-item list-group-item-action py-3 ${idx === 0 ? 'active' : ''}" style="border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--glass-border);" onclick="loadQuestion(${idx}, this)">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 text-truncate" style="max-width: 80%;">${i.question}</h6>
+                                        <small class="badge bg-${i.difficulty === 'Hard' ? 'danger' : (i.difficulty === 'Medium' ? 'warning' : 'success')}">${i.difficulty}</small>
+                                    </div>
+                                    <small class="text-muted"><i class="bi bi-tag"></i> ${i.category}</small>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card p-4 h-100" style="border: 1px solid var(--glass-border); background: var(--card-bg);" id="qDetailPanel">
+                        <!-- Loaded by JS -->
+                    </div>
+                </div>
+            `;
+            loadQuestion(0, document.querySelector('#qList button'));
+        }
+
+        let currentMock = null;
+
+        function loadQuestion(idx, btnElement) {
+            // Update active state
+            document.querySelectorAll('#qList button').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white'));
+            if(btnElement) {
+                btnElement.classList.add('active', 'bg-primary', 'text-white');
+            }
+
+            currentMock = interviews[idx];
+            const panel = document.getElementById('qDetailPanel');
+            
+            panel.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <h3 class="fw-bold">${currentMock.question}</h3>
+                    <span class="badge bg-info fs-6 px-3 py-2 rounded-pill">${currentMock.category}</span>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-primary"><i class="bi bi-chat-left-text me-2"></i> Your Answer:</label>
+                    <textarea class="form-control" id="userAnswer" rows="6" placeholder="Type your full answer here just as you would speak it in an interview..." style="background: rgba(0,0,0,0.03); border: 1px solid var(--glass-border); resize: vertical;"></textarea>
+                </div>
+
+                <button class="btn btn-primary btn-lg fw-bold px-4 mb-4" id="evalBtn" onclick="evaluateAnswer()">
+                    <i class="bi bi-magic me-2"></i> Evaluate My Answer
+                </button>
+
+                <div id="evaluationResult" class="d-none"></div>
+            `;
+        }
+
+        function evaluateAnswer() {
+            const userAns = document.getElementById('userAnswer').value.trim();
+            const resultDiv = document.getElementById('evaluationResult');
+            const btn = document.getElementById('evalBtn');
+            
+            if (!userAns) {
+                alert("Please type an answer before evaluating!");
+                return;
+            }
+
+            // Simulate processing
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Analyzing...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = '<i class="bi bi-magic me-2"></i> Re-Evaluate Answer';
+                btn.disabled = false;
+
+                // Simple NLP Heuristic for Demo:
+                // 1. Length check
+                // 2. Keyword matching from expected answer
+                const expected = currentMock.expected_answer.toLowerCase();
+                const user = userAns.toLowerCase();
+                
+                // Extract key words from expected (ignore small words)
+                const ignoreWords = ['the','a','an','and','or','but','is','are','was','were','to','of','in','on','at','by','for','with','about','as','it','this','that','I','you','we','they','my','your'];
+                let expectedWords = expected.match(/\b(\w+)\b/g) || [];
+                expectedWords = [...new Set(expectedWords.filter(w => !ignoreWords.includes(w) && w.length > 2))];
+                
+                let matchCount = 0;
+                expectedWords.forEach(w => {
+                    if (user.includes(w)) matchCount++;
+                });
+
+                let keywordScore = expectedWords.length > 0 ? (matchCount / expectedWords.length) * 100 : 0;
+                
+                // Length score
+                let lengthScore = Math.min((userAns.split(' ').length / (currentMock.expected_answer.split(' ').length || 1)) * 100, 100);
+                
+                // Weighted final score
+                let accuracy = Math.round((keywordScore * 0.7) + (lengthScore * 0.3));
+                
+                // Cap it naturally
+                if (accuracy > 98) accuracy = 98 + Math.floor(Math.random() * 2); 
+                if (userAns.length < 15) accuracy = Math.min(accuracy, 15); // Heavily penalize very short answers
+
+                let color = 'danger';
+                let feedbackTitle = 'Needs Improvement';
+                let feedbackText = 'Your answer is missing key concepts. Review the expected answer and try to incorporate those points.';
+
+                if (accuracy >= 80) {
+                    color = 'success';
+                    feedbackTitle = 'Excellent Answer!';
+                    feedbackText = 'You hit all the key points perfectly. ' + currentMock.tips;
+                } else if (accuracy >= 50) {
+                    color = 'warning';
+                    feedbackTitle = 'Good, but could be better';
+                    feedbackText = 'You got the basic idea, but missed some important details. Try to elaborate more. ' + currentMock.tips;
+                }
+
+                resultDiv.classList.remove('d-none');
+                resultDiv.innerHTML = `
+                    <div class="card p-4 border-${color}" style="background: rgba(${color==='success'?'25,135,84':(color==='warning'?'255,193,7':'220,53,69')}, 0.05);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="text-${color} fw-bold mb-0"><i class="bi ${accuracy >= 80 ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i> ${feedbackTitle}</h4>
+                            <div class="text-center">
+                                <span class="d-block small text-muted fw-bold text-uppercase">Accuracy</span>
+                                <h2 class="text-${color} fw-bold mb-0">${accuracy}%</h2>
+                            </div>
+                        </div>
+                        <p class="mb-4">${feedbackText}</p>
+                        
+                        <div class="p-3 rounded" style="background: var(--card-bg); border: 1px solid var(--glass-border);">
+                            <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-lightbulb text-warning"></i> Expected Answer / Ideal Response:</h6>
+                            <p class="mb-0 fst-italic text-muted">${currentMock.expected_answer}</p>
+                        </div>
+                    </div>
+                `;
+                
+                if (accuracy >= 50) {
+                    fetch('/api/student/submit-result', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ type: 'Mock Interview', score: accuracy })
+                    }).catch(e => console.log('Score update failed', e));
+                }
+
+            }, 1200);
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

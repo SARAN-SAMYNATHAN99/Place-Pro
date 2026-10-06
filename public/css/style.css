@@ -1,0 +1,242 @@
+:root {
+    --primary-color: #007aff;
+    --secondary-color: #6e6e73;
+    /* Color-Blind Safe Light Mode Gradient (Cool Mint & Lavender) */
+    --bg-gradient: radial-gradient(circle at 15% 50%, rgba(86, 180, 233, 0.35) 0%, transparent 50%),
+                   radial-gradient(circle at 85% 30%, rgba(204, 121, 167, 0.35) 0%, transparent 50%),
+                   radial-gradient(circle at 50% 80%, rgba(0, 158, 115, 0.25) 0%, transparent 50%),
+                   #f8f9fa;
+    --text-color: #1d1d1f;
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-blur: blur(50px) saturate(200%);
+}
+
+[data-theme="dark"] {
+    --primary-color: #0a84ff;
+    --secondary-color: #98989d;
+    /* Animated vivid mesh gradient for dark mode */
+    --bg-gradient: radial-gradient(circle at 15% 50%, rgba(225, 29, 72, 0.4) 0%, transparent 50%),
+                   radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.4) 0%, transparent 50%),
+                   radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.4) 0%, transparent 50%),
+                   #000000;
+    --text-color: #f2f2f7;
+    --card-bg: rgba(30, 30, 30, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --glass-blur: blur(50px) saturate(200%);
+}
+
+body {
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    background-size: 150% 150%;
+    animation: gradientMove 15s ease-in-out infinite alternate;
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, sans-serif;
+    transition: background 0.5s ease, color 0.5s ease;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 100%; }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* VisionOS Glass Cards */
+.card, .modal-content, .list-group-item {
+    color: var(--text-color) !important;
+}
+
+.card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px; /* iOS rounded corners */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Floating Glass Sidebar */
+.sidebar {
+    height: calc(100vh - 40px);
+    margin: 20px;
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 30px;
+    padding-top: 30px;
+    position: fixed;
+    width: 260px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.sidebar h3 {
+    letter-spacing: -1px;
+    margin-bottom: 30px;
+}
+
+.sidebar a {
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+    margin: 8px 16px;
+    border-radius: 16px;
+}
+
+.sidebar a i {
+    font-size: 1.25rem;
+    opacity: 0.8;
+}
+
+.sidebar a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .sidebar a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar a.active {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+}
+
+.sidebar a.active i {
+    opacity: 1;
+}
+
+.main-content {
+    margin-left: 300px; /* 260 width + 20 margin + 20 spacing */
+    padding: 40px 30px;
+}
+
+/* Inputs & Buttons iOS Style */
+.form-control, .form-select, .glass-input {
+    background: rgba(255,255,255,0.2) !important;
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    color: var(--text-color) !important;
+    padding: 12px 20px;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.2) !important;
+    background: rgba(255,255,255,0.3) !important;
+}
+
+[data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+    background: rgba(0,0,0,0.2) !important;
+}
+
+.btn {
+    border-radius: 16px;
+    padding: 10px 24px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:active {
+    transform: scale(0.96);
+}
+
+/* Modals for Glassmorphism */
+.modal-content {
+    background: var(--card-bg);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    border: 1px solid var(--glass-border);
+    border-radius: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    color: var(--text-color);
+    overflow: hidden;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--glass-border);
+    padding: 24px 30px;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--glass-border);
+}
+
+.modal-backdrop.show {
+    opacity: 0.4;
+    backdrop-filter: blur(10px);
+}
+
+/* List Groups inside Glass */
+.list-group-item {
+    background: transparent;
+    border-color: var(--glass-border);
+    color: var(--text-color);
+}
+
+.text-muted {
+    color: var(--secondary-color) !important;
+}
+
+/* Nav Tabs iOS */
+.nav-tabs {
+    border-bottom: 2px solid var(--glass-border);
+    gap: 10px;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    background: transparent;
+    border-radius: 16px 16px 0 0;
+    color: var(--secondary-color);
+    padding: 12px 24px;
+    transition: 0.3s;
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-bottom: none;
+    color: var(--text-color);
+    backdrop-filter: var(--glass-blur);
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: calc(100% - 40px);
+        height: auto;
+        position: relative;
+        border-radius: 24px;
+        margin-bottom: 20px;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+}

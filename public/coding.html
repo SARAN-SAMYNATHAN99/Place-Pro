@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coding - PlacePro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <h3 class="text-center text-primary fw-bold my-3">PlacePro</h3>
+        <a href="dashboard.html"><i class="bi bi-house-door"></i> Dashboard</a>
+        <a href="companies.html"><i class="bi bi-building"></i> Companies</a>
+        <a href="aptitude.html"><i class="bi bi-calculator"></i> Aptitude</a>
+        <a href="coding.html" class="active"><i class="bi bi-code-slash"></i> Coding</a>
+        <a href="learning.html"><i class="bi bi-book"></i> Learning</a>
+        <a href="mock-interview.html"><i class="bi bi-person-video2"></i> Mock Interviews</a>
+        <a href="progress.html"><i class="bi bi-graph-up"></i> Progress</a>
+        <a href="#" onclick="logout()" class="mt-auto mb-3 text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Coding Challenges</h2>
+            <button class="btn btn-outline-secondary" onclick="toggleTheme()"><i class="bi bi-moon"></i></button>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="difficultyTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active text-success fw-bold" id="tab-Easy" onclick="filterDifficulty('Easy')">Easy</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link text-warning fw-bold" id="tab-Medium" onclick="filterDifficulty('Medium')">Medium</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link text-danger fw-bold" id="tab-Hard" onclick="filterDifficulty('Hard')">Hard</button>
+            </li>
+        </ul>
+        
+        <input type="text" id="searchInput" class="form-control mb-3" style="background: var(--card-bg); color: var(--text-color); border-color: var(--glass-border);" placeholder="Search problems by name or topic..." onkeyup="renderList()">
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card p-3 h-100 overflow-auto" style="max-height: 70vh;" id="questionList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card p-4 h-100" id="questionDetail">
+                    <p class="text-muted">Select a question from the list to view details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        let allQuestions = [];
+        let currentFilter = 'Easy';
+        let currentFilteredQuestions = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            allQuestions = await fetchWithAuth('/questions/coding');
+            if (allQuestions) {
+                filterDifficulty('Easy');
+            }
+        });
+
+        function filterDifficulty(diff) {
+            currentFilter = diff;
+            
+            // Update active tab UI
+            ['Easy', 'Medium', 'Hard'].forEach(d => {
+                const tab = document.getElementById(`tab-${d}`);
+                if (d === diff) tab.classList.add('active');
+                else tab.classList.remove('active');
+            });
+            
+            renderList();
+            document.getElementById('questionDetail').innerHTML = '<p class="text-muted">Select a question from the list to view details.</p>';
+        }
+
+        function renderList() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const list = document.getElementById('questionList');
+            
+            currentFilteredQuestions = allQuestions.filter(q => 
+                q.difficulty === currentFilter && 
+                q.title.toLowerCase().includes(query)
+            );
+            
+            if (currentFilteredQuestions.length === 0) {
+                list.innerHTML = '<p class="text-muted text-center mt-3">No matching problems found.</p>';
+                return;
+            }
+
+            list.innerHTML = currentFilteredQuestions.map((q, idx) => `
+                <div class="p-3 border-bottom cursor-pointer list-group-item list-group-item-action" style="background: transparent; border-color: var(--glass-border); cursor: pointer;" onclick="showQuestion(${idx})">
+                    <strong>${q.title}</strong>
+                </div>
+            `).join('');
+        }
+
+        function showQuestion(filteredIdx) {
+            const q = currentFilteredQuestions[filteredIdx];
+            // Find global index to keep language switching reliable, or just pass the object
+            
+            let diffColor = 'success';
+            if (q.difficulty === 'Medium') diffColor = 'warning';
+            if (q.difficulty === 'Hard') diffColor = 'danger';
+
+            document.getElementById('questionDetail').innerHTML = `
+                <h3>${q.title}</h3>
+                <span class="badge bg-${diffColor} mb-3">${q.difficulty}</span>
+                <p>${q.description}</p>
+                <h5 class="text-primary mt-3">Example Input:</h5>
+                <pre class="p-3 rounded" style="background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border);">${q.example_input}</pre>
+                <h5 class="text-primary mt-3">Example Output:</h5>
+                <pre class="p-3 rounded" style="background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border);">${q.example_output}</pre>
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label><strong>Select Language:</strong></label>
+                        <button class="btn btn-outline-info btn-sm" onclick="alert('${q.hints.replace(/'/g, "\\'")}')">Show Hint <i class="bi bi-lightbulb"></i></button>
+                    </div>
+                    <select class="form-select w-25 mb-3" style="background: var(--card-bg); color: var(--text-color);" id="langSelect" onchange="updateSolution(${q.id})">
+                        <option value="java">Java</option>
+                        <option value="python">Python</option>
+                        <option value="cpp">C++</option>
+                    </select>
+                    <textarea class="form-control bg-dark text-light p-3 rounded font-monospace" id="solutionCode" rows="10" style="resize: vertical; border: 1px solid var(--glass-border); font-family: monospace;">${q.solution_java}</textarea>
+                    
+                    <div class="d-flex justify-content-end mt-3 gap-2">
+                        <button class="btn btn-outline-secondary" onclick="alert('Testing against example input...')"><i class="bi bi-play-fill"></i> Run Code</button>
+                        <button class="btn btn-success fw-bold" onclick="submitCode(${q.id})" id="submitBtn"><i class="bi bi-cloud-upload"></i> Submit Solution</button>
+                    </div>
+                    <div id="submitResult" class="mt-3"></div>
+                </div>
+            `;
+        }
+
+        function updateSolution(qId) {
+            const q = allQuestions.find(x => x.id === qId);
+            const lang = document.getElementById('langSelect').value;
+            let code = '';
+            if (lang === 'java') code = q.solution_java;
+            else if (lang === 'python') code = q.solution_python;
+            else if (lang === 'cpp') code = q.solution_cpp;
+            document.getElementById('solutionCode').value = code;
+        }
+
+        async function submitCode(qId) {
+            const btn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('submitResult');
+            const code = document.getElementById('solutionCode').value;
+            const lang = document.getElementById('langSelect').value;
+            
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Evaluating...';
+            btn.disabled = true;
+            resultDiv.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/student/submit-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ type: 'Coding Challenge', score: 10 })
+                });
+                
+                const data = await res.json();
+                
+                // Simulate processing delay for visual effect
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Submit Solution';
+                    btn.disabled = false;
+                    
+                    if (response.ok) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success border-success" role="alert" style="background: rgba(25, 135, 84, 0.1);">
+                                <h5 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Accepted!</h5>
+                                <p class="mb-0">All test cases passed perfectly. Your Daily Goal progress has been updated!</p>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `<div class="alert alert-danger">${data.error || 'Failed to submit.'}</div>`;
+                    }
+                }, 1500);
+            } catch (err) {
+                btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Submit Solution';
+                btn.disabled = false;
+                resultDiv.innerHTML = `<div class="alert alert-danger">Network error occurred.</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

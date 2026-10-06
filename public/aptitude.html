@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aptitude - PlacePro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <h3 class="text-center text-primary fw-bold my-3">PlacePro</h3>
+        <a href="dashboard.html"><i class="bi bi-house-door"></i> Dashboard</a>
+        <a href="companies.html"><i class="bi bi-building"></i> Companies</a>
+        <a href="aptitude.html" class="active"><i class="bi bi-calculator"></i> Aptitude</a>
+        <a href="coding.html"><i class="bi bi-code-slash"></i> Coding</a>
+        <a href="learning.html"><i class="bi bi-book"></i> Learning</a>
+        <a href="mock-interview.html"><i class="bi bi-person-video2"></i> Mock Interviews</a>
+        <a href="progress.html"><i class="bi bi-graph-up"></i> Progress</a>
+        <a href="#" onclick="logout()" class="mt-auto mb-3 text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h2 class="mb-4">Aptitude Test</h2>
+        <div class="card p-4" style="border: 1px solid var(--glass-border); background: var(--card-bg);">
+            
+            <!-- Intro Screen -->
+            <div id="introScreen" class="text-center p-3">
+                <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-clipboard-check fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-3">Aptitude Assessment</h3>
+                <p class="text-muted mb-4">Please review the test details carefully before starting.</p>
+                
+                <div class="row justify-content-center mb-5">
+                    <div class="col-md-8 text-start">
+                        <ul class="list-group list-group-flush" style="background: transparent;">
+                            <li class="list-group-item py-3" style="background: transparent; border-color: var(--glass-border);">
+                                <i class="bi bi-ui-checks text-success fs-5 me-3"></i> <strong>Format:</strong> Multiple Choice Questions (MCQs)
+                            </li>
+                            <li class="list-group-item py-3" style="background: transparent; border-color: var(--glass-border);">
+                                <i class="bi bi-list-ol text-primary fs-5 me-3"></i> <strong>Total Questions:</strong> <span id="qCountDisplay">...</span>
+                            </li>
+                            <li class="list-group-item py-3" style="background: transparent; border-color: var(--glass-border);">
+                                <i class="bi bi-stopwatch-fill text-danger fs-5 me-3"></i> <strong>Duration:</strong> 90 Minutes
+                            </li>
+                            <li class="list-group-item py-3" style="background: transparent; border-color: var(--glass-border);">
+                                <i class="bi bi-book-half text-warning fs-5 me-3"></i> <strong>Topics Covered:</strong> Quantitative Aptitude, Logical Reasoning, Verbal Ability
+                            </li>
+                            <li class="list-group-item py-3" style="background: transparent; border-color: var(--glass-border);">
+                                <i class="bi bi-buildings-fill text-info fs-5 me-3"></i> <strong>Relevant Companies:</strong> TCS, Infosys, Wipro, Accenture, Cognizant
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-lg fw-bold px-5 py-3 rounded-pill shadow" onclick="startAptitude()">
+                    <i class="bi bi-play-circle-fill me-2"></i> Start Aptitude Test
+                </button>
+            </div>
+
+            <!-- Quiz Area (Hidden Initially) -->
+            <div id="quizArea" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom" style="border-color: var(--glass-border) !important;">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-ui-checks-grid text-primary me-2"></i> Assessment</h4>
+                    <div class="px-4 py-2 rounded-pill fw-bold fs-5 text-white shadow-sm" id="timerDisplay" style="background: linear-gradient(135deg, #ef4444, #b91c1c); letter-spacing: 2px;">
+                        <i class="bi bi-alarm me-2"></i> 01:30:00
+                    </div>
+                </div>
+                <div id="quizContainer">
+                    <p>Loading questions...</p>
+                </div>
+                <div class="d-flex justify-content-between mt-5">
+                    <button class="btn btn-outline-secondary px-4 fw-bold" id="prevBtn" onclick="prevQ()" disabled><i class="bi bi-arrow-left me-2"></i> Previous</button>
+                    <button class="btn btn-primary px-4 fw-bold" id="nextBtn" onclick="nextQ()">Next <i class="bi bi-arrow-right ms-2"></i></button>
+                    <button class="btn btn-success d-none px-4 fw-bold" id="submitBtn" onclick="submitQuiz()"><i class="bi bi-check-circle-fill me-2"></i> Submit Test</button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let questions = [];
+        let currentQ = 0;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            questions = await fetchWithAuth('/questions/aptitude');
+            if (questions && questions.length > 0) {
+                document.getElementById('qCountDisplay').innerText = questions.length;
+                renderQ();
+            } else {
+                document.getElementById('quizContainer').innerHTML = "<p>No questions available.</p>";
+                document.getElementById('qCountDisplay').innerText = "0";
+            }
+        });
+
+        let answers = {};
+        
+        function selectOption(opt) { answers[currentQ] = opt; }
+
+        function renderQ() {
+            const q = questions[currentQ];
+            document.getElementById('quizContainer').innerHTML = `
+                <h5>Q${currentQ + 1}: ${q.question}</h5>
+                <span class="badge bg-info mb-3">${q.category}</span> <span class="badge bg-secondary mb-3">${q.difficulty}</span>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="opt" id="opt_a" onclick="selectOption('a')" ${answers[currentQ] === 'a' ? 'checked' : ''}>
+                    <label class="form-check-label" for="opt_a">${q.option_a}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="opt" id="opt_b" onclick="selectOption('b')" ${answers[currentQ] === 'b' ? 'checked' : ''}>
+                    <label class="form-check-label" for="opt_b">${q.option_b}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="opt" id="opt_c" onclick="selectOption('c')" ${answers[currentQ] === 'c' ? 'checked' : ''}>
+                    <label class="form-check-label" for="opt_c">${q.option_c}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="opt" id="opt_d" onclick="selectOption('d')" ${answers[currentQ] === 'd' ? 'checked' : ''}>
+                    <label class="form-check-label" for="opt_d">${q.option_d}</label>
+                </div>
+            `;
+            document.getElementById('prevBtn').disabled = currentQ === 0;
+            if (currentQ === questions.length - 1) {
+                document.getElementById('nextBtn').classList.add('d-none');
+                document.getElementById('submitBtn').classList.remove('d-none');
+            } else {
+                document.getElementById('nextBtn').classList.remove('d-none');
+                document.getElementById('submitBtn').classList.add('d-none');
+            }
+        }
+
+        let timerInterval;
+        let timeLeft = 90 * 60; // 90 minutes in seconds
+
+        function startAptitude() {
+            document.getElementById('introScreen').classList.add('d-none');
+            document.getElementById('quizArea').classList.remove('d-none');
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let h = Math.floor(timeLeft / 3600);
+                let m = Math.floor((timeLeft % 3600) / 60);
+                let s = timeLeft % 60;
+                
+                document.getElementById('timerDisplay').innerHTML = 
+                    `<i class="bi bi-alarm me-2"></i> ${h < 10 ? '0'+h : h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Time's up! Auto-submitting your test.");
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function prevQ() { if(currentQ > 0) { currentQ--; renderQ(); } }
+        function nextQ() { if(currentQ < questions.length - 1) { currentQ++; renderQ(); } }
+        function submitQuiz() { 
+            clearInterval(timerInterval); // Stop timer
+            let score = 0;
+            for(let i = 0; i < questions.length; i++) {
+                if(answers[i] && questions[i].correct_answer && answers[i].toLowerCase() === questions[i].correct_answer.toLowerCase()) {
+                    score++;
+                }
+            }
+
+            const percentage = (score / questions.length) * 100;
+            let feedback = '';
+            let color = '';
+            
+            if (percentage >= 80) {
+                feedback = "Outstanding performance! You are well-prepared. To push for top-tier companies (30+ LPA), focus on Advanced Data Structures and System Design.";
+                color = "success";
+            } else if (percentage >= 50) {
+                feedback = "Good job! You have a solid foundation. To improve your chances, review the topics where you made mistakes and practice medium-level coding challenges daily.";
+                color = "warning";
+            } else {
+                feedback = "Keep practicing! Focus on strengthening your core fundamentals. Start with Easy coding challenges and review the recommended study materials before taking the test again.";
+                color = "danger";
+            }
+
+            document.getElementById('quizContainer').innerHTML = `
+                <div class="text-center mt-4 p-3">
+                    <h2 class="text-${color} mb-3 fw-bold">Final Score: ${score} / ${questions.length}</h2>
+                    <div class="progress mb-4" style="height: 30px; background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); border-radius: 15px;">
+                        <div class="progress-bar bg-${color} progress-bar-striped progress-bar-animated" role="progressbar" style="width: ${percentage}%" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"><span class="fw-bold fs-6">${percentage.toFixed(0)}%</span></div>
+                    </div>
+                    <div class="p-4 rounded mt-4" style="background: var(--card-bg); border: 1px solid var(--glass-border); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h4 class="text-primary mb-3"><i class="bi bi-lightbulb"></i> How to Improve</h4>
+                        <p class="fs-5">${feedback}</p>
+                        <hr style="border-color: var(--glass-border);">
+                        <a href="learning.html" class="btn btn-primary mt-2 me-2"><i class="bi bi-book"></i> Study Materials</a>
+                        <a href="coding.html" class="btn btn-outline-primary mt-2"><i class="bi bi-code-slash"></i> Practice Coding</a>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('prevBtn').classList.add('d-none');
+            document.getElementById('submitBtn').classList.add('d-none');
+
+            // Submit result to backend
+            fetch('/api/student/submit-result', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ type: 'Aptitude Test', score: Math.round(percentage) })
+            }).catch(e => console.log('Score update failed', e));
+        }
+    </script>
+</body>
+</html>
